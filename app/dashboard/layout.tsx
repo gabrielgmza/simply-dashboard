@@ -9,6 +9,7 @@ const navSections = [
     items: [
       { href: '/dashboard', label: 'Inicio' },
       { href: '/dashboard/customers', label: 'Customer 360' },
+      { href: '/dashboard/crm', label: 'CRM' },
     ],
   },
   {
@@ -25,8 +26,9 @@ const navSections = [
       { href: '/dashboard/wallets', label: 'Wallets' },
       { href: '/dashboard/transfers', label: 'Transferencias' },
       { href: '/dashboard/investments', label: 'Inversiones' },
-      { href: '/dashboard/credit', label: 'Crédito' },
+      { href: '/dashboard/credit', label: 'Cupo' },
       { href: '/dashboard/collections', label: 'Cobranzas' },
+      { href: '/dashboard/loans', label: 'Préstamos' },
     ],
   },
   {
@@ -35,6 +37,7 @@ const navSections = [
       { href: '/dashboard/scoring', label: 'Scoring' },
       { href: '/dashboard/aml', label: 'AML' },
       { href: '/dashboard/fraud', label: 'Fraude' },
+      { href: '/dashboard/security', label: 'Seguridad' },
     ],
   },
   {
@@ -42,6 +45,8 @@ const navSections = [
     items: [
       { href: '/dashboard/treasury', label: 'Tesorería' },
       { href: '/dashboard/reconciliation', label: 'Conciliación' },
+      { href: '/dashboard/accounting', label: 'Contabilidad' },
+      { href: '/dashboard/company', label: 'Cuentas empresa' },
       { href: '/dashboard/ledger', label: 'Ledger' },
     ],
   },
@@ -52,6 +57,7 @@ const navSections = [
       { href: '/dashboard/audit', label: 'Audit Trail' },
       { href: '/dashboard/notifications', label: 'Notificaciones' },
       { href: '/dashboard/employees', label: 'Empleados' },
+      { href: '/dashboard/flags', label: 'Feature Flags' },
     ],
   },
 ];
