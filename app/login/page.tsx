@@ -15,8 +15,9 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const { data } = await api.post('/employees/auth/login', { email, password });
       localStorage.setItem('simply_token', data.access_token);
+      localStorage.setItem('simply_employee', JSON.stringify(data.employee));
       router.push('/dashboard');
     } catch {
       setError('Credenciales inválidas');
@@ -34,34 +35,22 @@ export default function LoginPage() {
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-sm text-gray-400 block mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500"
-              required
-            />
+            <label className="text-sm text-gray-400 block mb-1">Email corporativo</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500" required />
           </div>
           <div>
             <label className="text-sm text-gray-400 block mb-1">Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500"
-              required
-            />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500" required />
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 font-medium transition disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 font-medium transition disabled:opacity-50">
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+        <p className="text-gray-600 text-xs text-center mt-6">Acceso exclusivo para empleados de PaySur</p>
       </div>
     </div>
   );

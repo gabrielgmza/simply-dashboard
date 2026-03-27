@@ -51,6 +51,7 @@ const navSections = [
       { href: '/dashboard/support', label: 'Soporte' },
       { href: '/dashboard/audit', label: 'Audit Trail' },
       { href: '/dashboard/notifications', label: 'Notificaciones' },
+      { href: '/dashboard/employees', label: 'Empleados' },
     ],
   },
 ];
@@ -59,15 +60,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
+  const [employee, setEmployee] = useState<any>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('simply_token');
+    const emp = localStorage.getItem('simply_employee');
     if (!token) router.push('/login');
-    else setReady(true);
+    else {
+      setReady(true);
+      if (emp) setEmployee(JSON.parse(emp));
+    }
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('simply_token');
+    localStorage.removeItem('simply_employee');
     router.push('/login');
   };
 
@@ -85,15 +92,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div key={section.title} className="mb-4">
               <p className="text-gray-600 text-xs font-medium px-2 mb-1 uppercase tracking-wider">{section.title}</p>
               {section.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
+                <Link key={item.href} href={item.href}
                   className={`block px-3 py-1.5 rounded-lg text-sm transition mb-0.5 ${
-                    pathname === item.href
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                  }`}
-                >
+                    pathname === item.href ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                  }`}>
                   {item.label}
                 </Link>
               ))}
@@ -101,6 +103,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
         <div className="p-3 border-t border-gray-800">
+          {employee && (
+            <div className="mb-2 px-3">
+              <p className="text-white text-xs font-medium">{employee.firstName} {employee.lastName}</p>
+              <p className="text-gray-500 text-xs">{employee.role}</p>
+            </div>
+          )}
           <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
             Cerrar sesión
           </button>
