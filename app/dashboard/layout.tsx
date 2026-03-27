@@ -38,6 +38,7 @@ const navSections = [
       { href: '/dashboard/aml', label: 'AML' },
       { href: '/dashboard/fraud', label: 'Fraude' },
       { href: '/dashboard/security', label: 'Seguridad' },
+      { href: '/dashboard/compliance', label: 'Compliance UIF' },
     ],
   },
   {
@@ -48,6 +49,12 @@ const navSections = [
       { href: '/dashboard/accounting', label: 'Contabilidad' },
       { href: '/dashboard/company', label: 'Cuentas empresa' },
       { href: '/dashboard/ledger', label: 'Ledger' },
+    ],
+  },
+  {
+    title: 'Regulatorio',
+    items: [
+      { href: '/dashboard/psp', label: 'Registro PSP BCRA' },
     ],
   },
   {
@@ -72,10 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const token = localStorage.getItem('simply_token');
     const emp = localStorage.getItem('simply_employee');
     if (!token) router.push('/login');
-    else {
-      setReady(true);
-      if (emp) setEmployee(JSON.parse(emp));
-    }
+    else { setReady(true); if (emp) setEmployee(JSON.parse(emp)); }
   }, [router]);
 
   const handleLogout = () => {
