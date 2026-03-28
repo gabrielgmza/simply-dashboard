@@ -7,23 +7,21 @@ export default function CompliancePage() {
   const [reports, setReports] = useState<any[]>([]);
   const [officers, setOfficers] = useState<any[]>([]);
   const [docs, setDocs] = useState<any[]>([]);
-  const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   const fetch = async () => {
-    const [s, r, o, d, a] = await Promise.all([
+    const [s, r, o, d] = await Promise.all([
       api.get('/compliance/summary'),
       api.get('/compliance/reports'),
       api.get('/compliance/officers'),
       api.get('/compliance/documents'),
-      api.get('/compliance/risk-assessments'),
     ]);
     setSummary(s.data);
     setReports(r.data);
     setOfficers(o.data);
     setDocs(d.data);
-    setAssessments(a.data);
     setLoading(false);
   };
 
@@ -45,18 +43,49 @@ export default function CompliancePage() {
     setGenerating(false);
   };
 
-  if (loading) return <p className="text-gray-400">Cargando...</p>;
+  const downloadPDF = async (type: 'gap-matrix' | 'compliance-report') => {
+    setDownloading(type);
+    try {
+      const token = localStorage.getItem('simply_token');
+      const res = await window.fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://simply-backend-888610796336.southamerica-east1.run.app/api/v1'}/documents/${type}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `simply_${type}_${new Date().toISOString().split('T')[0]}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const statusColor: Record<string, string> = {
     approved: 'text-green-400 bg-green-400/10',
     draft: 'text-yellow-400 bg-yellow-400/10',
     generated: 'text-blue-400 bg-blue-400/10',
-    submitted: 'text-green-400 bg-green-400/10',
   };
+
+  if (loading) return <p className="text-gray-400">Cargando...</p>;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-white text-xl font-semibold">Compliance UIF / BCRA</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-white text-xl font-semibold">Compliance UIF / BCRA</h2>
+        <div className="flex gap-2">
+          <button onClick={() => downloadPDF('gap-matrix')} disabled={!!downloading}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2">
+            {downloading === 'gap-matrix' ? '⏳' : '📥'} Matriz Gap Normativo
+          </button>
+          <button onClick={() => downloadPDF('compliance-report')} disabled={!!downloading}
+            className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2">
+            {downloading === 'compliance-report' ? '⏳' : '📥'} Reporte Compliance
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className={`bg-gray-900 border rounded-xl p-4 ${summary.hasOfficer ? 'border-green-800' : 'border-red-800'}`}>
@@ -124,14 +153,12 @@ export default function CompliancePage() {
       {officers.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <p className="text-gray-400 text-sm font-medium mb-3">Oficiales de Cumplimiento</p>
-          <div className="space-y-2">
-            {officers.map((o) => (
-              <div key={o.id} className="flex items-center justify-between">
-                <p className="text-white text-sm">{o.role} — {o.resolutionNumber || 'Sin resolución'}</p>
-                <p className="text-gray-500 text-xs">{new Date(o.appointedAt).toLocaleDateString('es-AR')}</p>
-              </div>
-            ))}
-          </div>
+          {officers.map((o) => (
+            <div key={o.id} className="flex items-center justify-between">
+              <p className="text-white text-sm">{o.role} — {o.resolutionNumber || 'Sin resolución'}</p>
+              <p className="text-gray-500 text-xs">{new Date(o.appointedAt).toLocaleDateString('es-AR')}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>

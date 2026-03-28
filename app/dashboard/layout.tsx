@@ -52,6 +52,13 @@ const navSections = [
     ],
   },
   {
+    title: 'Producto',
+    items: [
+      { href: '/dashboard/account-levels', label: 'Niveles de Cuenta' },
+      { href: '/dashboard/flags', label: 'Feature Flags' },
+    ],
+  },
+  {
     title: 'Regulatorio',
     items: [
       { href: '/dashboard/psp', label: 'Registro PSP BCRA' },
@@ -64,7 +71,6 @@ const navSections = [
       { href: '/dashboard/audit', label: 'Audit Trail' },
       { href: '/dashboard/notifications', label: 'Notificaciones' },
       { href: '/dashboard/employees', label: 'Empleados' },
-      { href: '/dashboard/flags', label: 'Feature Flags' },
     ],
   },
 ];
