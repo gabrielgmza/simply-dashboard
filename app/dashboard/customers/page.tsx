@@ -1,4 +1,5 @@
 'use client';
+import { useRequirePin } from '@/lib/security';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 
@@ -13,6 +14,7 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('Resumen');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const requirePin = useRequirePin();
 
   useEffect(() => {
     api.get('/users').then(r => { setUsers(r.data); setLoading(false); });
@@ -31,6 +33,10 @@ export default function CustomersPage() {
 
   const updateStatus = async (status: string) => {
     if (!selected) return;
+    if (['blocked', 'frozen', 'restricted'].includes(status)) {
+      const ok = await requirePin(`Cambiar estado del cliente a "${status}"`);
+      if (!ok) return;
+    }
     setUpdatingStatus(true);
     try {
       await api.put(`/users/${selected.id}/status`, { status });

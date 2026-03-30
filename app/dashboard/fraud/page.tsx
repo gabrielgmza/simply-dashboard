@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRequirePin } from '@/lib/security';
 import api from '@/lib/api';
 
 export default function FraudPage() {
@@ -11,6 +12,7 @@ export default function FraudPage() {
   const [selected, setSelected] = useState<any>(null);
   const [notes, setNotes] = useState('');
   const [updating, setUpdating] = useState(false);
+  const requirePin = useRequirePin();
 
   const load = async () => {
     setLoading(true);
@@ -28,6 +30,10 @@ export default function FraudPage() {
   useEffect(() => { load(); }, []);
 
   const update = async (id: string, status: string) => {
+    if (['resolved', 'escalated', 'rejected'].includes(status)) {
+      const ok = await requirePin(`Cambiar caso de fraude a "${status}"`);
+      if (!ok) return;
+    }
     setUpdating(true);
     await api.put(`/fraud/cases/${id}/status`, { status, analystNotes: notes || `Actualizado a ${status}` }).catch(() => {});
     setSelected(null);

@@ -1,4 +1,5 @@
 'use client';
+import { useRequirePin } from '@/lib/security';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 
@@ -8,6 +9,7 @@ export default function AmlPage() {
   const [summary, setSummary] = useState<any>(null);
   const [tab, setTab] = useState<'alerts' | 'rules'>('alerts');
   const [loading, setLoading] = useState(true);
+  const requirePin = useRequirePin();
   const [editingRule, setEditingRule] = useState<any>(null);
 
   const fetchAll = async () => {
@@ -25,6 +27,12 @@ export default function AmlPage() {
   useEffect(() => { fetchAll(); }, []);
 
   const resolveAlert = async (id: string, status: string) => {
+    if (['resolved', 'reported_uif', 'false_positive'].includes(status)) {
+      const ok = await requirePin(`Resolver alerta AML como "${status}"`);
+      if (!ok) return;
+    }
+    const ok = await requirePin('Resolver alerta AML');
+    if (!ok) return;
     await api.put(`/aml/alerts/${id}/resolve`, {
       resolvedBy: 'dashboard',
       notes: `Marcado como ${status} desde dashboard`,
@@ -34,6 +42,8 @@ export default function AmlPage() {
   };
 
   const saveRule = async () => {
+    const ok = await requirePin('Modificar regla AML');
+    if (!ok) return;
     await api.put(`/aml/rules/${editingRule.id}`, editingRule);
     setEditingRule(null);
     fetchAll();
