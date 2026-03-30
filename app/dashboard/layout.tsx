@@ -25,6 +25,7 @@ const navSections = [
     items: [
       { href: '/dashboard/wallets', label: 'Wallets' },
       { href: '/dashboard/transfers', label: 'Transferencias' },
+      { href: '/dashboard/qr', label: 'Pagos QR' },
       { href: '/dashboard/investments', label: 'Inversiones' },
       { href: '/dashboard/credit', label: 'Cupo' },
       { href: '/dashboard/collections', label: 'Cobranzas' },
