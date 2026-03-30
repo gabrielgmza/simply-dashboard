@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { SecurityProvider } from '@/lib/security';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -216,7 +217,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p className="text-gray-600 text-[10px] truncate">{employee?.role || 'admin'}</p>
               </div>
               <button onClick={handleLogout} title="Cerrar sesión"
-                className="text-gray-700 hover:text-red-400 transition text-xs opacity-0 group-hover:opacity-100">
+                className="text-gray-600 hover:text-red-400 transition text-xs">
                 ⏻
               </button>
             </div>
@@ -230,6 +231,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main */}
+      <SecurityProvider>
       <div className="flex-1 flex flex-col overflow-hidden main-bg">
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-3 border-b border-white/[0.04] flex-shrink-0">
@@ -255,6 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+      </SecurityProvider>
     </div>
   );
 }
