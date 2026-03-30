@@ -20,7 +20,6 @@ const navSections = [
     items: [
       { href: '/dashboard/users', label: 'Usuarios', icon: '○' },
       { href: '/dashboard/kyc', label: 'KYC Review', icon: '◇' },
-      { href: '/dashboard/profiles', label: 'Perfiles', icon: '◈' },
     ],
   },
   {
