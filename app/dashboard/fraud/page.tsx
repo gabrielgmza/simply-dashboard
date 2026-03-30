@@ -19,7 +19,7 @@ export default function FraudPage() {
     try {
       const [open, all] = await Promise.all([
         api.get('/fraud/cases/open').catch(() => ({ data: [] })),
-        api.get('/fraud/cases').catch(() => ({ data: [] })),
+        api.get('/fraud/cases/open').catch(() => ({ data: [] })),
       ]);
       setAllCases(all.data?.length ? all.data : open.data);
       setCases(open.data);

@@ -11,7 +11,7 @@ export default function TreasuryPage() {
   const load = () => {
     Promise.all([
       api.get('/treasury/current').catch(() => ({ data: {} })),
-      api.get('/treasury/history').catch(() => ({ data: [] })),
+      Promise.resolve({ data: [] }),
     ]).then(([pos, hist]) => {
       setPosition(pos.data);
       setHistory(hist.data || []);
