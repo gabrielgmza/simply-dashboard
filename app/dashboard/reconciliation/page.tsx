@@ -5,107 +5,184 @@ import api from '@/lib/api';
 export default function ReconciliationPage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>(null);
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [filterItems, setFilterItems] = useState('all');
 
-  const fetchBatches = () => api.get('/reconciliation/batches').then(r => { setBatches(r.data); setLoading(false); });
+  const fetchBatches = async () => {
+    const [b, s] = await Promise.all([
+      api.get('/reconciliation/batches').catch(() => ({ data: [] })),
+      api.get('/reconciliation/summary').catch(() => ({ data: null })),
+    ]);
+    setBatches(b.data);
+    setSummary(s.data);
+    setLoading(false);
+  };
+
   useEffect(() => { fetchBatches(); }, []);
 
   const run = async () => {
     setRunning(true);
-    await api.post('/reconciliation/run');
+    await api.post('/reconciliation/run').catch(() => {});
     await fetchBatches();
     setRunning(false);
   };
 
   const selectBatch = async (batch: any) => {
     setSelectedBatch(batch);
-    const r = await api.get(`/reconciliation/batches/${batch.id}/items`);
+    setFilterItems('all');
+    const r = await api.get(`/reconciliation/batches/${batch.id}/items`).catch(() => ({ data: [] }));
     setItems(r.data);
   };
 
-  const fmt = (n: any) => Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+  const fmt = (n: any) => Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+  const fmtDate = (d: any) => d ? new Date(d).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
-  if (loading) return <p className="text-gray-400">Cargando...</p>;
+  const batchStatusColor: Record<string, string> = {
+    closed:              'text-green-400 bg-green-400/10 border-green-400/20',
+    closed_with_errors:  'text-red-400 bg-red-400/10 border-red-400/20',
+    processing:          'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+    open:                'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  };
+
+  const filteredItems = filterItems === 'all' ? items : items.filter(i => i.status === filterItems);
+  const unmatchedItems = items.filter(i => i.status === 'unmatched');
+  const matchedItems = items.filter(i => i.status === 'matched');
+
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />)}</div></div>;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-white text-xl font-semibold">Conciliación</h2>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-white text-xl font-bold">Conciliación</h2>
+          <p className="text-gray-500 text-sm mt-0.5">Ledger vs Wallets · Ejecución automática 02:00 AM</p>
+        </div>
         <button onClick={run} disabled={running}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition disabled:opacity-50">
-          {running ? 'Ejecutando...' : '▶ Ejecutar conciliación'}
+          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm px-4 py-2 rounded-xl transition flex items-center gap-2">
+          {running ? <><span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />Ejecutando...</> : '▶ Ejecutar ahora'}
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Lista batches */}
+      {/* Summary */}
+      {summary && (
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: 'Último estado', value: summary.status === 'closed' ? 'OK' : 'Con errores', color: summary.status === 'closed' ? 'text-green-400' : 'text-red-400' },
+            { label: 'Coincidencias', value: summary.matched || 0, color: 'text-green-400' },
+            { label: 'Discrepancias', value: summary.unmatched || 0, color: summary.unmatched > 0 ? 'text-red-400' : 'text-gray-500' },
+            { label: 'Diferencia total', value: fmt(summary.difference || 0), color: summary.difference > 0 ? 'text-red-400' : 'text-green-400' },
+          ].map((kpi, i) => (
+            <div key={i} className="bg-gray-900/80 border border-gray-800 rounded-xl p-4">
+              <p className="text-gray-500 text-xs mb-1">{kpi.label}</p>
+              <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Historial batches */}
         <div>
-          <p className="text-gray-500 text-xs mb-3">HISTORIAL DE CONCILIACIONES</p>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left text-gray-400 px-4 py-3 font-medium">Fecha</th>
-                  <th className="text-left text-gray-400 px-4 py-3 font-medium">Estado</th>
-                  <th className="text-right text-gray-400 px-4 py-3 font-medium">✓</th>
-                  <th className="text-right text-gray-400 px-4 py-3 font-medium">✗</th>
-                </tr>
-              </thead>
-              <tbody>
-                {batches.map((b) => (
-                  <tr key={b.id}
-                    onClick={() => selectBatch(b)}
-                    className={`border-b border-gray-800/50 cursor-pointer transition ${selectedBatch?.id === b.id ? 'bg-blue-900/20' : 'hover:bg-gray-800/30'}`}>
-                    <td className="px-4 py-3 text-white">{new Date(b.date).toLocaleDateString('es-AR')}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        b.status === 'closed' ? 'text-green-400 bg-green-400/10' :
-                        b.status === 'closed_with_errors' ? 'text-red-400 bg-red-400/10' :
-                        'text-yellow-400 bg-yellow-400/10'
-                      }`}>{b.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-green-400">{b.matchedItems}</td>
-                    <td className="px-4 py-3 text-right text-red-400">{b.unmatchedItems}</td>
+          <p className="text-gray-500 text-xs font-medium mb-3 uppercase tracking-wider">Historial de ejecuciones</p>
+          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl overflow-hidden">
+            {batches.length === 0 ? (
+              <p className="text-gray-700 text-sm text-center py-8">Sin ejecuciones registradas</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    {['Fecha', 'Estado', '✓', '✗', 'Diferencia'].map(h => (
+                      <th key={h} className="text-left text-gray-500 px-4 py-3 font-medium">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {batches.map(b => (
+                    <tr key={b.id} onClick={() => selectBatch(b)}
+                      className={`border-b border-gray-800/50 cursor-pointer transition ${selectedBatch?.id === b.id ? 'bg-blue-900/20' : 'hover:bg-gray-800/20'}`}>
+                      <td className="px-4 py-3 text-gray-400">{fmtDate(b.date)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full border text-xs ${batchStatusColor[b.status] || 'text-gray-400 bg-gray-400/10 border-gray-400/20'}`}>
+                          {b.status === 'closed' ? 'OK' : b.status === 'closed_with_errors' ? 'Errores' : b.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-green-400 font-semibold">{b.matchedItems}</td>
+                      <td className="px-4 py-3 text-red-400 font-semibold">{b.unmatchedItems}</td>
+                      <td className={`px-4 py-3 font-semibold ${Number(b.difference || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        {fmt(b.difference || 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
-        {/* Items del batch */}
+        {/* Detalle batch */}
         <div>
-          {selectedBatch ? (
+          {!selectedBatch ? (
+            <div className="h-full flex items-center justify-center bg-gray-900/40 border border-gray-800 rounded-2xl">
+              <p className="text-gray-600 text-sm">Seleccioná una ejecución para ver el detalle</p>
+            </div>
+          ) : (
             <>
-              <p className="text-gray-500 text-xs mb-3">
-                DETALLE — {new Date(selectedBatch.date).toLocaleDateString('es-AR')} · Diferencia total: {fmt(selectedBatch.difference)}
-              </p>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden max-h-96 overflow-y-auto">
-                {items.map((item) => (
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                  Detalle · {fmtDate(selectedBatch.date)}
+                </p>
+                <div className="flex gap-1 bg-gray-900/60 border border-gray-800 rounded-lg p-0.5">
+                  {['all', 'matched', 'unmatched'].map(f => (
+                    <button key={f} onClick={() => setFilterItems(f)}
+                      className={`text-xs px-2 py-1 rounded-md transition ${filterItems === f ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>
+                      {f === 'all' ? `Todos (${items.length})` : f === 'matched' ? `✓ ${matchedItems.length}` : `✗ ${unmatchedItems.length}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedBatch.difference !== 0 && (
+                <div className="bg-red-900/20 border border-red-900/30 rounded-xl p-3 mb-3 flex items-center justify-between">
+                  <p className="text-red-400 text-xs font-medium">Diferencia detectada</p>
+                  <p className="text-red-400 text-sm font-bold">{fmt(selectedBatch.difference)}</p>
+                </div>
+              )}
+
+              <div className="bg-gray-900/80 border border-gray-800 rounded-2xl overflow-hidden max-h-96 overflow-y-auto">
+                {filteredItems.length === 0 ? (
+                  <p className="text-gray-700 text-center py-8 text-sm">Sin items</p>
+                ) : filteredItems.map(item => (
                   <div key={item.id} className={`p-4 border-b border-gray-800/50 ${item.status === 'unmatched' ? 'bg-red-900/10' : ''}`}>
-                    <div className="flex items-start justify-between mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${item.status === 'matched' ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'}`}>
-                        {item.status}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${item.status === 'matched' ? 'text-green-400 bg-green-400/10 border-green-400/20' : 'text-red-400 bg-red-400/10 border-red-400/20'}`}>
+                        {item.status === 'matched' ? '✓ Coincide' : '✗ Discrepancia'}
                       </span>
-                      <span className="text-gray-500 text-xs">{item.referenceType}</span>
+                      <span className="text-gray-600 text-xs font-mono">{item.referenceType}</span>
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">{item.notes}</p>
+                    {item.notes && <p className="text-gray-500 text-xs mb-2">{item.notes}</p>}
                     {item.status === 'unmatched' && (
-                      <div className="flex gap-4 mt-2 text-xs">
-                        <span className="text-gray-500">Ledger: <span className="text-white">{fmt(item.expectedAmount)}</span></span>
-                        <span className="text-gray-500">Wallet: <span className="text-red-400">{fmt(item.actualAmount)}</span></span>
+                      <div className="flex gap-6 bg-gray-800/60 rounded-lg p-2 mt-1">
+                        <div>
+                          <p className="text-gray-600 text-xs">Ledger esperado</p>
+                          <p className="text-white text-xs font-semibold">{fmt(item.expectedAmount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-xs">Wallet real</p>
+                          <p className="text-red-400 text-xs font-semibold">{fmt(item.actualAmount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-xs">Diferencia</p>
+                          <p className="text-red-400 text-xs font-bold">{fmt(Math.abs((item.expectedAmount || 0) - (item.actualAmount || 0)))}</p>
+                        </div>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             </>
-          ) : (
-            <div className="flex items-center justify-center h-40">
-              <p className="text-gray-600">Seleccioná un batch para ver el detalle</p>
-            </div>
           )}
         </div>
       </div>
