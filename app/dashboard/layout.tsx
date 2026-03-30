@@ -165,7 +165,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <p className="text-[10px] text-gray-600 mt-0.5 ml-8">PaySur · Panel interno</p>
             </div>
           )}
-          <button onClick={() => const next = !collapsed; setCollapsed(next); localStorage.setItem('simply_sidebar_collapsed', String(next))}
+          <button onClick={() => { const next = !collapsed; setCollapsed(next); localStorage.setItem('simply_sidebar_collapsed', String(next)); }}
             className="text-gray-600 hover:text-gray-300 transition p-1 rounded-lg hover:bg-white/[0.04] ml-auto">
             {collapsed ? '→' : '←'}
           </button>
