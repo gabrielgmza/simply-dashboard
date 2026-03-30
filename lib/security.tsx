@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutos
 const WARNING_BEFORE = 2 * 60 * 1000; // advertir 2 min antes
-const CRITICAL_PIN = '1234'; // en producción esto debería venir del backend
+
 
 interface SecurityContextType {
   requirePin: (action: string) => Promise<boolean>;
@@ -66,14 +66,26 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const submitPin = () => {
-    if (pin === CRITICAL_PIN) {
-      pinModal?.resolve(true);
-      setPinModal(null);
-      setPin('');
-      setPinError('');
-    } else {
-      setPinError('PIN incorrecto');
+  const submitPin = async () => {
+    try {
+      const token = localStorage.getItem('simply_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://simply-backend-888610796336.southamerica-east1.run.app'}/api/v1/employees/verify-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        pinModal?.resolve(true);
+        setPinModal(null);
+        setPin('');
+        setPinError('');
+      } else {
+        setPinError('PIN incorrecto');
+        setPin('');
+      }
+    } catch {
+      setPinError('Error de conexión');
       setPin('');
     }
   };
@@ -140,7 +152,7 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
               {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, i) => (
                 <button key={i} onClick={() => {
                   if (k === '⌫') { setPin(p => p.slice(0,-1)); setPinError(''); }
-                  else if (k !== '' && pin.length < 4) { const np = pin + k; setPin(np); if (np.length === 4) setTimeout(() => { if (np === CRITICAL_PIN) { pinModal.resolve(true); setPinModal(null); setPin(''); setPinError(''); } else { setPinError('PIN incorrecto'); setPin(''); }}, 100); }
+                  else if (k !== '' && pin.length < 4) { const np = pin + k; setPin(np); if (np.length === 4) setTimeout(() => submitPin(), 100); }
                 }}
                   disabled={k === ''}
                   className={`h-12 rounded-xl text-sm font-semibold transition-all ${k === '' ? 'cursor-default' : 'bg-gray-800 hover:bg-gray-700 text-white active:scale-95'}`}>
