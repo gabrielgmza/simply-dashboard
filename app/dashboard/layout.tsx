@@ -77,6 +77,7 @@ const navSections = [
     icon: '⊕',
     items: [
       { href: '/dashboard/support', label: 'Soporte', icon: '◎' },
+      { href: '/dashboard/reports', label: 'Reportes', icon: '▤' },
       { href: '/dashboard/audit', label: 'Audit Trail', icon: '◷' },
       { href: '/dashboard/notifications', label: 'Notificaciones', icon: '◉' },
       { href: '/dashboard/employees', label: 'Empleados', icon: '○' },
